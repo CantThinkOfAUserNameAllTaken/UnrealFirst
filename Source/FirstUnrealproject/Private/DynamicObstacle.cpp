@@ -25,7 +25,7 @@ void UDynamicObstacle::BeginPlay()
 	Super::BeginPlay();
 	//ANavGraph* grid = ANavGraph::instance;
 	// ...
-	if (&DA_DynamicObstacleCounter == NULL || &DA_DynamicObstacleCounter == nullptr || !DA_DynamicObstacleCounter) {
+	if (!DA_DynamicObstacleCounter) {
 		return;
 	}
 	DA_DynamicObstacleCounter->RegisterObject(this);
@@ -35,7 +35,7 @@ void UDynamicObstacle::BeginPlay()
 void UDynamicObstacle::BeginDestroy()
 {
 	Super::BeginDestroy();
-	if (&DA_DynamicObstacleCounter == NULL || &DA_DynamicObstacleCounter == nullptr || !DA_DynamicObstacleCounter) {
+	if (!DA_DynamicObstacleCounter) {
 		return;
 	}
 	DA_DynamicObstacleCounter->DeregisterObject(this);
@@ -49,16 +49,21 @@ void UDynamicObstacle::Accept(IMyVisitor& visitor)
 void UDynamicObstacle::UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& grid, FVector orginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
 {
 	FVector difference = GetOwner()->GetActorLocation() - orginalPos;
-	int ZPos = difference.Z / cellSize;
+	float ZOffset = GetOwner()->GetComponentsBoundingBox().GetSize().Z;
+	int ZPos = (difference.Z - ZOffset) / cellSize;
 	int YPos = difference.Y / cellSize;
 	int XPos = difference.X / cellSize;
+	UE_LOG(LogTemp, Warning, TEXT("OutOfBounds difference Z: %.4f"), difference.Z - ZOffset);
 
 	if (WithinArrayBounds(ZPos, arrayZ, YPos, arrayY, XPos, arrayX)) {
-		UE_LOG(LogTemp, Warning, TEXT("adding to function"))
-		grid[ZPos][YPos][XPos].contains = ANavGraph::Obstacle;
+
+			if (!grid[ZPos][YPos][XPos].contains == Obstacle) {
+				UE_LOG(LogTemp, Warning, TEXT("adding to function XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"), XPos, YPos, ZPos, arrayX);
+				grid[ZPos][YPos][XPos].SetContains(Obstacle);;
+			}
 	}
 	else {
-		UE_LOG(LogTemp, Warning, TEXT("OutOfBounds XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"), XPos, YPos, ZPos, arrayZ);
+		UE_LOG(LogTemp, Warning, TEXT("OutOfBounds XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"), XPos, YPos, ZPos, arrayX);
 	}
 
 
@@ -66,7 +71,7 @@ void UDynamicObstacle::UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& gr
 
 bool UDynamicObstacle::WithinArrayBounds(int ZPos, int arrayZ, int YPos, int arrayY, int XPos, int arrayX)
 {
-	return ZPos <= arrayZ && YPos <= arrayY && XPos <= arrayX && XPos > -1 && YPos > -1 && ZPos > -1;
+	return ZPos < arrayZ && YPos < arrayY && XPos < arrayX && XPos >= 0 && YPos >= 0 && ZPos >= 0;
 }
 
 // Called every frame

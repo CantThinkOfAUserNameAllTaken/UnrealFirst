@@ -10,6 +10,8 @@ using namespace std;
 class UDynamicObstacle;
 class UMyDyanmicObjectList;
 
+enum GridCanContain { Empty, Obstacle, Enemy, Player };
+
 UCLASS()
 class FIRSTUNREALPROJECT_API ANavGraph : public AActor, public IMyVisitor
 {
@@ -17,7 +19,7 @@ class FIRSTUNREALPROJECT_API ANavGraph : public AActor, public IMyVisitor
 
 public:
 
-	enum GridCanContain { Empty, Obstacle, Enemy, Player };
+
 	struct GridSquare {
 		FVector startPoint;
 		FVector endPointX;
@@ -26,12 +28,18 @@ public:
 		FVector Center;
 		GridCanContain contains;
 
-		GridSquare(FVector InStartPoint = FVector(0,0,0), float InCellSize = 0)
+		public :
+			void SetContains(GridCanContain NowContains) {
+			contains = NowContains;
+			}
+
+		GridSquare(FVector InStartPoint = FVector(0,0,0), float InCellSize = 0, GridCanContain NowContains = Empty)
 			: startPoint(InStartPoint),
 			endPointX(FVector(InStartPoint.X + InCellSize, InStartPoint.Y, InStartPoint.Z)),
 			endPointY(FVector(InStartPoint.X, InStartPoint.Y + InCellSize, InStartPoint.Z)),
 			cellSize(InCellSize),
-			Center(FVector(startPoint.X + (cellSize / 2), startPoint.Y + (cellSize / 2), startPoint.Z + (cellSize / 2))) {}
+			Center(FVector(startPoint.X + (cellSize / 2), startPoint.Y + (cellSize / 2), startPoint.Z + (cellSize / 2))),
+		    contains(NowContains) {}
 
 	};
 	void Visit(UDynamicObstacle& dynamicObstacle) override;

@@ -87,12 +87,12 @@ FVector ANavGraph::DefineSquareBounds(float baseX, float baseY, float baseZ)
 
 ANavGraph::GridSquare ANavGraph::CreateSquare(FVector& start, float cellSize)
 {
-	GridSquare square(start, cellSize);
+	GridSquare square(start, cellSize, Empty);
 	square.contains = SquareContains(square.Center, cellSize);
 	return square;
 }
 
-ANavGraph::GridCanContain ANavGraph::SquareContains(FVector boxCenter, float cellSize)
+GridCanContain ANavGraph::SquareContains(FVector boxCenter, float cellSize)
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypesToCheck;
 	TArray<AActor*> ActrosToIgnore;

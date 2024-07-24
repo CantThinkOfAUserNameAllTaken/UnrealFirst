@@ -47,7 +47,6 @@ void APlayerBullet::OnHit(UPrimitiveComponent* HitComponent,
 		enemyHealth->TakeDamage(DamageDealt);
 	}
 	else {
-		UE_LOG(LogTemp, Warning, TEXT("no tags"));
 		for (const FName& tag : OtherActor->Tags) {
 			UE_LOG(LogTemp, Warning, TEXT("Tag: %s"), *tag.ToString());
 		}
