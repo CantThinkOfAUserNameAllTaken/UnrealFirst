@@ -27,6 +27,7 @@ void UBaseTurning::turnTowardsTarget(FVector position)
 {
 	AActor* Actor = GetOwner();
 	FVector Direction = (position - Actor->GetActorLocation()).GetSafeNormal();
+	UE_LOG(LogTemp, Warning, TEXT("Direction to player: %s"), *Direction.ToCompactString())
 	FRotator3d TargetRotation = FRotationMatrix::MakeFromX(Direction).Rotator();
 	Actor->SetActorRotation(TargetRotation);
 }

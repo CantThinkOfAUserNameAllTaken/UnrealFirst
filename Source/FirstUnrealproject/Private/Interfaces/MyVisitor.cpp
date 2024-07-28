@@ -5,6 +5,7 @@
 #include "NavGraph.h"
 #include "DynamicObstacle.h"
 #include "MyDynamicObjectList.h"
+#include "TagetNavigation.h"
 
 
 // Add default functionality here for any IMyVisitor functions that are not pure virtual.
@@ -12,4 +13,8 @@
 void IMyVisitor::Visit(UDynamicObstacle& component)
 {
 
+}
+
+void IMyVisitor::Visit(UTagetNavigation& component, FVector Location)
+{
 }

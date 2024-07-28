@@ -41,38 +41,80 @@ void UDynamicObstacle::BeginDestroy()
 	DA_DynamicObstacleCounter->DeregisterObject(this);
 }
 
+
+
 void UDynamicObstacle::Accept(IMyVisitor& visitor)
 {
 	visitor.Visit(*this);
 }
 
-void UDynamicObstacle::UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& grid, FVector orginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
+void UDynamicObstacle::UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& grid, FVector OriginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
 {
-	FVector difference = GetOwner()->GetActorLocation() - orginalPos;
-	float ZOffset = GetOwner()->GetComponentsBoundingBox().GetSize().Z;
-	int ZPos = (difference.Z - ZOffset) / cellSize;
-	int YPos = difference.Y / cellSize;
-	int XPos = difference.X / cellSize;
-	UE_LOG(LogTemp, Warning, TEXT("OutOfBounds difference Z: %.4f"), difference.Z - ZOffset);
+	int ZPos, YPos, XPos;
+	UpdatePositionOnGrid(OriginalPos, cellSize, ZPos, YPos, XPos);
 
 	if (WithinArrayBounds(ZPos, arrayZ, YPos, arrayY, XPos, arrayX)) {
 
-			if (!grid[ZPos][YPos][XPos].contains == Obstacle) {
-				UE_LOG(LogTemp, Warning, TEXT("adding to function XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"), XPos, YPos, ZPos, arrayX);
-				grid[ZPos][YPos][XPos].SetContains(Obstacle);;
-			}
+		DeregisterLastObstaclePosition();
+		if (NotAlreadyObstacle(grid, ZPos, YPos, XPos)) {
+			UE_LOG(LogTemp, Warning,
+				TEXT("adding to function XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"),
+				XPos, YPos, ZPos, arrayX);
+			grid[ZPos][YPos][XPos].SetContains(Obstacle);
+			StoreCurrentPosition(grid, ZPos, YPos, XPos);
+			return;
+		}
+		return;
 	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("OutOfBounds XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"), XPos, YPos, ZPos, arrayX);
-	}
+	UE_LOG(LogTemp, Warning,
+		TEXT("OutOfBounds XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"),
+		XPos, YPos, ZPos, arrayX);
+	return;
 
 
+}
+
+
+
+
+
+void UDynamicObstacle::UpdatePositionOnGrid(FVector OriginalPos, float cellSize, int& ZPos, int& YPos, int& XPos )
+{
+	AActor* Owner = GetOwner();
+	FVector difference = GetOwner()->GetActorLocation() - OriginalPos;
+	float ZOffset = GetOwner()->GetComponentsBoundingBox().GetSize().Z;
+	ZPos = (difference.Z - ZOffset) / cellSize;
+	YPos = difference.Y / cellSize;
+	XPos = difference.X / cellSize;
 }
 
 bool UDynamicObstacle::WithinArrayBounds(int ZPos, int arrayZ, int YPos, int arrayY, int XPos, int arrayX)
 {
 	return ZPos < arrayZ && YPos < arrayY && XPos < arrayX && XPos >= 0 && YPos >= 0 && ZPos >= 0;
 }
+
+
+
+void UDynamicObstacle::DeregisterLastObstaclePosition()
+{
+	if (!LastPositon) {
+		return;
+	}
+	LastPositon->SetContains(Empty);
+	LastPositon = nullptr;
+}
+
+bool UDynamicObstacle::NotAlreadyObstacle(ANavGraph::GridSquare***& grid, int ZPos, int YPos, int XPos)
+{
+	return !grid[ZPos][YPos][XPos].contains == Obstacle;
+}
+
+void UDynamicObstacle::StoreCurrentPosition(ANavGraph::GridSquare***& grid, int ZPos, int YPos, int XPos)
+{
+	LastPositon = &grid[ZPos][YPos][XPos];
+}
+
+
 
 // Called every frame
 void UDynamicObstacle::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

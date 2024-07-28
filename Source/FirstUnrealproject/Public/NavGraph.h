@@ -9,6 +9,8 @@
 using namespace std;
 class UDynamicObstacle;
 class UMyDyanmicObjectList;
+class UTagetNavigation;
+class UMyTargetNavigationList;
 
 enum GridCanContain { Empty, Obstacle, Enemy, Player };
 
@@ -43,7 +45,8 @@ public:
 
 	};
 	void Visit(UDynamicObstacle& dynamicObstacle) override;
-
+	void Visit(UTagetNavigation& Navigator, FVector TargetLocation) override;
+	void GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPos, int& YPos, int& XPos);
 	// Sets default values for this actor's proper
 	ANavGraph();
 	//static ANavGraph* instance;
@@ -61,6 +64,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	UMyDynamicObjectList* DA_DynamicObstaclesList;
+
+	UPROPERTY(EditAnywhere)
+	UMyTargetNavigationList* DA_TargetNavigationList;
 
 	float TimeLastShot = -888;
 
@@ -126,6 +132,8 @@ private:
 	void DrawXAxisZLines(int totalColumns, FVector& start, float cellSize, FColor& color, int lifeTime);
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChnagedEvent) override;
+
+	float RoundTo1OrNegative1(float number);
 
 public:
 	// Called every frame

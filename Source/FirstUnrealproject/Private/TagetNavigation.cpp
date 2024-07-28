@@ -2,6 +2,7 @@
 
 
 #include "TagetNavigation.h"
+#include "Interfaces\MyVisitor.h"
 
 // Sets default values for this component's properties
 UTagetNavigation::UTagetNavigation()
@@ -11,6 +12,10 @@ UTagetNavigation::UTagetNavigation()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
+}
+void UTagetNavigation::Accept(IMyVisitor& visitor)
+{
+	visitor.Visit(*this, Target->GetActorLocation());
 }
 
 void UTagetNavigation::GoToTarget(FVector target)

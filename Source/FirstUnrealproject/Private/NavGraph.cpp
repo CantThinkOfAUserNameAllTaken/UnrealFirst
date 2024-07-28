@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string>
 #include "MyDynamicObjectList.h"
+#include "TagetNavigation.h"
+#include "MyTargetNavigationList.h"
 
 //ANavGraph* ANavGraph::instance = nullptr;
 
@@ -16,6 +18,59 @@ void ANavGraph::Visit(UDynamicObstacle& dynamicObstacle)
 	dynamicObstacle.UpdateObstaclePositionOnGrid(Grid, GetActorLocation(), tileSize, NumHeight, NumColumns, NumRows);
 }
 
+void ANavGraph::Visit(UTagetNavigation& Navigator, FVector TargetLocation)
+{
+	TArray<GridSquare*> Path;
+	AActor* MovingActor = Navigator.GetOwner();
+	FVector MovingActorLocation = MovingActor->GetActorLocation();
+	FVector Direction = (TargetLocation - MovingActorLocation).GetSafeNormal();
+	int XDirection = RoundTo1OrNegative1(Direction.X);
+	int YDirection = RoundTo1OrNegative1(Direction.Y);
+	int ZPos, YPos, XPos;
+	GetPositionOnGrid(MovingActor, tileSize, ZPos, YPos, XPos);
+	GridSquare square = Grid[ZPos][YPos][XPos + XDirection];
+	float heuristicX = 888888888, heuristicY = 88888888;
+	if (square.contains != Obstacle) {
+		FVector location = square.Center;
+		heuristicX = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+	}
+	square = Grid[ZPos][YPos + YDirection][XPos];
+	if (square.contains != Obstacle) {
+		FVector location = square.Center;
+		heuristicY = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+	}
+	if (heuristicX < heuristicY) {
+		Path.Add(&Grid[ZPos][YPos][XPos + XDirection]);
+	}
+	else {
+		Path.Add(&Grid[ZPos][YPos + YDirection][XPos]);
+	}
+
+}
+
+void ANavGraph::GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPos, int& YPos, int& XPos)
+{
+	AActor* owner = GetOwner();
+	FVector MovingObjectLocation = MovingObject->GetActorLocation();
+	FVector difference = MovingObjectLocation - owner->GetActorLocation();
+	float ZOffset = MovingObject->GetComponentsBoundingBox().GetSize().Z;
+	ZPos = (difference.Z - ZOffset) / cellSize;
+	YPos = difference.Y / cellSize;
+	XPos = difference.X / cellSize;
+
+}
+
+float ANavGraph::RoundTo1OrNegative1(float number)
+{
+	if (number > 0) {
+		return 1;
+	}
+	else if (number < 0)
+	{
+		return -1;
+	}
+	return 0;
+}
 
 // Sets default values
 ANavGraph::ANavGraph()
@@ -208,6 +263,7 @@ void ANavGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyChnagedEve
 		FlushPersistentDebugLines(GetWorld());
 	}
 }
+
 #endif
 
 // Called every frame
@@ -222,6 +278,10 @@ void ANavGraph::Tick(float DeltaTime)
 
 			DynamicObstacleList[DynamicObject]->Accept(*this);
 		}
+		//TArray<UTagetNavigation*> TargetNavigationList = DA_TargetNavigationList->GetRegisteredObjects();
+		//for (int MovingActor = 0; MovingActor < TargetNavigationList.Num(); MovingActor++) {
+		//	TargetNavigationList[MovingActor]->Accept(*this);
+		//}
 	}
 }
 
