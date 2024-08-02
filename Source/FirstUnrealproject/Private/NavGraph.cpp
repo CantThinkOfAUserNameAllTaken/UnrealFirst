@@ -2,6 +2,7 @@
 
 
 #include "NavGraph.h"
+#include"MyGridSquare.h"
 #include "ProceduralMeshComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DynamicObstacle.h"
@@ -18,34 +19,50 @@ void ANavGraph::Visit(UDynamicObstacle& dynamicObstacle)
 	dynamicObstacle.UpdateObstaclePositionOnGrid(Grid, GetActorLocation(), tileSize, NumHeight, NumColumns, NumRows);
 }
 
-void ANavGraph::Visit(UTagetNavigation& Navigator, FVector TargetLocation)
+TArray<MyGridSquare::GridSquare*> ANavGraph::Visit(UTagetNavigation& Navigator, AActor* Target)
 {
-	TArray<GridSquare*> Path;
+	TArray<MyGridSquare::GridSquare*> Path;
 	AActor* MovingActor = Navigator.GetOwner();
 	FVector MovingActorLocation = MovingActor->GetActorLocation();
-	FVector Direction = (TargetLocation - MovingActorLocation).GetSafeNormal();
-	int XDirection = RoundTo1OrNegative1(Direction.X);
-	int YDirection = RoundTo1OrNegative1(Direction.Y);
+	FVector TargetLocation = Target->GetActorLocation();
 	int ZPos, YPos, XPos;
-	GetPositionOnGrid(MovingActor, tileSize, ZPos, YPos, XPos);
-	GridSquare square = Grid[ZPos][YPos][XPos + XDirection];
-	float heuristicX = 888888888, heuristicY = 88888888;
-	if (square.contains != Obstacle) {
-		FVector location = square.Center;
-		heuristicX = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
-	}
-	square = Grid[ZPos][YPos + YDirection][XPos];
-	if (square.contains != Obstacle) {
-		FVector location = square.Center;
-		heuristicY = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
-	}
-	if (heuristicX < heuristicY) {
-		Path.Add(&Grid[ZPos][YPos][XPos + XDirection]);
-	}
-	else {
-		Path.Add(&Grid[ZPos][YPos + YDirection][XPos]);
-	}
+	int XPath = 0, YPath = 0;
+	for (int PathNumber = 0; IsPathAtTarget(Target, MovingActor, ZPos, YPos, XPos); PathNumber++) {
+		YPos += YPath;
+		XPos += XPath;
+		FVector Direction = (TargetLocation - MovingActorLocation).GetSafeNormal();
+		int XDirection = RoundTo1OrNegative1(Direction.X);
+		int YDirection = RoundTo1OrNegative1(Direction.Y);
 
+		MyGridSquare::GridSquare square = Grid[ZPos][YPos][XPos + XDirection];
+		float heuristicX = NULL, heuristicY = NULL;
+		if (square.contains != MyGridSquare::Obstacle) {
+			FVector location = square.Center;
+			heuristicX = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+		}
+		square = Grid[ZPos][YPos + YDirection][XPos];
+		if (square.contains != MyGridSquare::Obstacle) {
+			FVector location = square.Center;
+			heuristicY = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+		}
+		if (heuristicY && heuristicX < heuristicY) {
+			Path.Add(&Grid[ZPos][YPos][XPos + XDirection]);
+			XPath++;
+		}
+		else if (heuristicX) {
+			Path.Add(&Grid[ZPos][YPos + YDirection][XPos]);
+			YPath++;
+		}
+	}
+	return Path;
+
+}
+
+bool ANavGraph::IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int&XPos) {
+	int MZPos, MYPos, MXPos;
+	GetPositionOnGrid(MovingActor, tileSize, ZPos, YPos, XPos);
+	GetPositionOnGrid(Target, tileSize, MZPos, MYPos, MXPos);
+	return (XPos == MXPos && YPos == MYPos);
 }
 
 void ANavGraph::GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPos, int& YPos, int& XPos)
@@ -101,9 +118,9 @@ void ANavGraph::BeginPlay()
 
 
 
-ANavGraph::GridSquare*** ANavGraph::CreateGrid()
+MyGridSquare::GridSquare*** ANavGraph::CreateGrid()
 {
-	Grid = new GridSquare **[NumHeight];
+	Grid = new MyGridSquare::GridSquare **[NumHeight];
 	float baseZ = 0;
 	for (int height = 0; height < NumHeight; height++) {
 		float baseY = 0;
@@ -125,12 +142,12 @@ ANavGraph::GridSquare*** ANavGraph::CreateGrid()
 
 void ANavGraph::AddColumn(int height)
 {
-	Grid[height] = new GridSquare * [NumColumns];
+	Grid[height] = new MyGridSquare::GridSquare * [NumColumns];
 }
 
 void ANavGraph::AddRow(int height, int column)
 {
-	Grid[height][column] = new GridSquare[NumRows];
+	Grid[height][column] = new MyGridSquare::GridSquare[NumRows];
 }
 
 FVector ANavGraph::DefineSquareBounds(float baseX, float baseY, float baseZ)
@@ -140,14 +157,14 @@ FVector ANavGraph::DefineSquareBounds(float baseX, float baseY, float baseZ)
 	return start;
 }
 
-ANavGraph::GridSquare ANavGraph::CreateSquare(FVector& start, float cellSize)
+MyGridSquare::GridSquare ANavGraph::CreateSquare(FVector& start, float cellSize)
 {
-	GridSquare square(start, cellSize, Empty);
+	MyGridSquare::GridSquare square(start, cellSize, MyGridSquare::Empty);
 	square.contains = SquareContains(square.Center, cellSize);
 	return square;
 }
 
-GridCanContain ANavGraph::SquareContains(FVector boxCenter, float cellSize)
+MyGridSquare::GridCanContain ANavGraph::SquareContains(FVector boxCenter, float cellSize)
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypesToCheck;
 	TArray<AActor*> ActrosToIgnore;
@@ -157,10 +174,10 @@ GridCanContain ANavGraph::SquareContains(FVector boxCenter, float cellSize)
 	DoesCubeContainStaticActor(bHit, boxCenter, cellSize,
 		ObjectTypesToCheck, ActrosToIgnore, OverlappedActors);
 	if (!bHit) {
-		return GridCanContain(Empty);
+		return MyGridSquare::GridCanContain(MyGridSquare::Empty);
 	}
 	DebugShowObstacle(boxCenter);
-	return GridCanContain(Obstacle);
+	return MyGridSquare::GridCanContain(MyGridSquare::Obstacle);
 }
 
 void ANavGraph::DoesCubeContainStaticActor(bool& bHit,

@@ -5,10 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Interfaces\MyVisitable.h"
-#include "NavGraph.h"
+#include "MyGridSquare.h"
 #include "DynamicObstacle.generated.h"
 class IMyVisitor;
-class ANavGraph;
 class UMyDynamicObjectList;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -31,14 +30,14 @@ protected:
 
 private:
 	void UpdatePositionOnGrid(FVector OriginalPos, float cellSize, int& ZPos, int& YPos, int& XPos);
-	ANavGraph::GridSquare* LastPositon;
+	MyGridSquare::GridSquare* LastPositon;
 	void DeregisterLastObstaclePosition();
 
 public:	
 	void Accept(IMyVisitor& visitor) override;
-	void UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& grid, FVector originalPos, float cellSize, int arrayZ, int arrayY, int arrayX);
-	bool NotAlreadyObstacle(ANavGraph::GridSquare***& grid, int ZPos, int YPos, int XPos);
-	void StoreCurrentPosition(ANavGraph::GridSquare***& grid, int ZPos, int YPos, int XPos);
+	void UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector originalPos, float cellSize, int arrayZ, int arrayY, int arrayX);
+	bool NotAlreadyObstacle(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos);
+	void StoreCurrentPosition(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos);
 	bool WithinArrayBounds(int ZPos, int arrayZ, int YPos, int arrayY, int XPos, int arrayX);
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

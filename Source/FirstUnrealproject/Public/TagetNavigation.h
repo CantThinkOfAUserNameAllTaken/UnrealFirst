@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Interfaces\MyVisitable.h"
-#include "NavGraph.h"
+#include "MyGridSquare.h"
 #include "TagetNavigation.generated.h"
 class IMyVisitor;
-class ANavGraph;
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class FIRSTUNREALPROJECT_API UTagetNavigation : public UActorComponent, public IMyVisitable
@@ -21,13 +21,16 @@ public:
 
 	FVector distanceFromTarget;
 
-	void GoToTarget(FVector target);
+	void GoToTarget(TArray<MyGridSquare::GridSquare*> Path);
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 private:
+	
+	UPROPERTY(EditAnywhere)
+	float Speed;
 	
 	UPROPERTY(EditAnywhere)
 	AActor* Target;

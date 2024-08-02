@@ -7,12 +7,12 @@
 #include "NavGraph.generated.h"
 
 using namespace std;
+class MyGridSquare;
 class UDynamicObstacle;
 class UMyDyanmicObjectList;
 class UTagetNavigation;
 class UMyTargetNavigationList;
 
-enum GridCanContain { Empty, Obstacle, Enemy, Player };
 
 UCLASS()
 class FIRSTUNREALPROJECT_API ANavGraph : public AActor, public IMyVisitor
@@ -22,30 +22,10 @@ class FIRSTUNREALPROJECT_API ANavGraph : public AActor, public IMyVisitor
 public:
 
 
-	struct GridSquare {
-		FVector startPoint;
-		FVector endPointX;
-		FVector endPointY;
-		float cellSize;
-		FVector Center;
-		GridCanContain contains;
 
-		public :
-			void SetContains(GridCanContain NowContains) {
-			contains = NowContains;
-			}
-
-		GridSquare(FVector InStartPoint = FVector(0,0,0), float InCellSize = 0, GridCanContain NowContains = Empty)
-			: startPoint(InStartPoint),
-			endPointX(FVector(InStartPoint.X + InCellSize, InStartPoint.Y, InStartPoint.Z)),
-			endPointY(FVector(InStartPoint.X, InStartPoint.Y + InCellSize, InStartPoint.Z)),
-			cellSize(InCellSize),
-			Center(FVector(startPoint.X + (cellSize / 2), startPoint.Y + (cellSize / 2), startPoint.Z + (cellSize / 2))),
-		    contains(NowContains) {}
-
-	};
 	void Visit(UDynamicObstacle& dynamicObstacle) override;
-	void Visit(UTagetNavigation& Navigator, FVector TargetLocation) override;
+	TArray<MyGridSquare::GridSquare*> Visit(UTagetNavigation& Navigator, AActor* Target) override;
+	bool IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int& XPos);
 	void GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPos, int& YPos, int& XPos);
 	// Sets default values for this actor's proper
 	ANavGraph();
@@ -74,19 +54,19 @@ private:
 	float UpdateDynamicObjectsPositionsInterval;
 	FVector DefineSquareBounds(float baseX, float baseY, float baseZ);
 
-	GridSquare*** Grid = nullptr;
+	MyGridSquare::GridSquare*** Grid = nullptr;
 
-	GridSquare*** CreateGrid();
+	MyGridSquare::GridSquare*** CreateGrid();
 
 	void AddRow(int height, int column);
 
 	void AddColumn(int height);
 
-	GridCanContain SquareContains(FVector boxCenter, float cellSize);
+	MyGridSquare::GridCanContain SquareContains(FVector boxCenter, float cellSize);
 
 	void DoesCubeContainStaticActor(bool& bHit, const FVector& boxCenter, float cellSize, TArray<TEnumAsByte<EObjectTypeQuery>>& ObjectTypesToCheck, TArray<AActor*, FDefaultAllocator>& ActrosToIgnore, TArray<AActor*, FDefaultAllocator>& OverlappedActors);
 
-	GridSquare CreateSquare(FVector& start, float cellSize);
+	MyGridSquare::GridSquare CreateSquare(FVector& start, float cellSize);
 
 	void DebugShowObstacle(FVector center);
 	UPROPERTY(EditAnywhere)

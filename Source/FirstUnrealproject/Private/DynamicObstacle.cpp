@@ -48,7 +48,7 @@ void UDynamicObstacle::Accept(IMyVisitor& visitor)
 	visitor.Visit(*this);
 }
 
-void UDynamicObstacle::UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& grid, FVector OriginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
+void UDynamicObstacle::UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector OriginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
 {
 	int ZPos, YPos, XPos;
 	UpdatePositionOnGrid(OriginalPos, cellSize, ZPos, YPos, XPos);
@@ -60,7 +60,7 @@ void UDynamicObstacle::UpdateObstaclePositionOnGrid(ANavGraph::GridSquare***& gr
 			UE_LOG(LogTemp, Warning,
 				TEXT("adding to function XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"),
 				XPos, YPos, ZPos, arrayX);
-			grid[ZPos][YPos][XPos].SetContains(Obstacle);
+			grid[ZPos][YPos][XPos].SetContains(MyGridSquare::Obstacle);
 			StoreCurrentPosition(grid, ZPos, YPos, XPos);
 			return;
 		}
@@ -100,16 +100,16 @@ void UDynamicObstacle::DeregisterLastObstaclePosition()
 	if (!LastPositon) {
 		return;
 	}
-	LastPositon->SetContains(Empty);
+	LastPositon->SetContains(MyGridSquare::Empty);
 	LastPositon = nullptr;
 }
 
-bool UDynamicObstacle::NotAlreadyObstacle(ANavGraph::GridSquare***& grid, int ZPos, int YPos, int XPos)
+bool UDynamicObstacle::NotAlreadyObstacle(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos)
 {
-	return !grid[ZPos][YPos][XPos].contains == Obstacle;
+	return !grid[ZPos][YPos][XPos].contains == MyGridSquare::Obstacle;
 }
 
-void UDynamicObstacle::StoreCurrentPosition(ANavGraph::GridSquare***& grid, int ZPos, int YPos, int XPos)
+void UDynamicObstacle::StoreCurrentPosition(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos)
 {
 	LastPositon = &grid[ZPos][YPos][XPos];
 }

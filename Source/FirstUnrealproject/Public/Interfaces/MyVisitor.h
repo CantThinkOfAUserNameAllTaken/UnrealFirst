@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "MyGridSquare.h"
 #include "MyVisitor.generated.h"
 
-class ANavGraph;
 class UDynamicObstacle;
 class UMyDynamicObjectList;
 class UTagetNavigation;
@@ -28,5 +28,5 @@ class FIRSTUNREALPROJECT_API IMyVisitor
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual void Visit(UDynamicObstacle& component);
-	virtual void Visit(UTagetNavigation& component, FVector Location);
+	virtual TArray<MyGridSquare::GridSquare*> Visit(UTagetNavigation& component, AActor* actor);
 };

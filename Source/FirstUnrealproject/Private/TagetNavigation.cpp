@@ -4,6 +4,7 @@
 #include "TagetNavigation.h"
 #include "Interfaces\MyVisitor.h"
 
+
 // Sets default values for this component's properties
 UTagetNavigation::UTagetNavigation()
 {
@@ -15,12 +16,19 @@ UTagetNavigation::UTagetNavigation()
 }
 void UTagetNavigation::Accept(IMyVisitor& visitor)
 {
-	visitor.Visit(*this, Target->GetActorLocation());
+	TArray<MyGridSquare::GridSquare*> Path = visitor.Visit(*this, Target);
+	GoToTarget(Path);
 }
 
-void UTagetNavigation::GoToTarget(FVector target)
+void UTagetNavigation::GoToTarget(TArray<MyGridSquare::GridSquare*> Path)
 {
-
+	AActor* MovingActor = GetOwner();
+	for (int PathNode = 0; PathNode < Path.Num(); PathNode++) {
+		FVector Objective = Path[PathNode]->Center;
+		while (MovingActor->GetActorLocation().X != Objective.X && MovingActor->GetActorLocation().Y != Objective.Y) {
+			MovingActor->SetActorLocation(FMath::VInterpConstantTo(MovingActor->GetActorLocation(), FVector(Objective.X, Objective.Y, MovingActor->GetActorLocation().Z), GetWorld()->GetDeltaSeconds(), Speed));
+		}
+	}
 }
 
 

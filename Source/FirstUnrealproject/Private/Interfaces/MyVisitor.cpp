@@ -2,7 +2,6 @@
 
 
 #include "Interfaces/MyVisitor.h"
-#include "NavGraph.h"
 #include "DynamicObstacle.h"
 #include "MyDynamicObjectList.h"
 #include "TagetNavigation.h"
@@ -15,6 +14,8 @@ void IMyVisitor::Visit(UDynamicObstacle& component)
 
 }
 
-void IMyVisitor::Visit(UTagetNavigation& component, FVector Location)
+TArray<MyGridSquare::GridSquare*> IMyVisitor::Visit(UTagetNavigation& component, AActor* actor)
 {
+	return TArray<MyGridSquare::GridSquare*>();
 }
+
