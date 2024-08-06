@@ -21,55 +21,77 @@ void ANavGraph::Visit(UDynamicObstacle& dynamicObstacle)
 
 TArray<MyGridSquare::GridSquare*> ANavGraph::Visit(UTagetNavigation& Navigator, AActor* Target)
 {
+	UE_LOG(LogTemp, Warning, TEXT("start of Path Creation"));
 	TArray<MyGridSquare::GridSquare*> Path;
 	AActor* MovingActor = Navigator.GetOwner();
 	FVector MovingActorLocation = MovingActor->GetActorLocation();
 	FVector TargetLocation = Target->GetActorLocation();
 	int ZPos, YPos, XPos;
 	int XPath = 0, YPath = 0;
-	for (int PathNumber = 0; IsPathAtTarget(Target, MovingActor, ZPos, YPos, XPos); PathNumber++) {
-		YPos += YPath;
-		XPos += XPath;
-		FVector Direction = (TargetLocation - MovingActorLocation).GetSafeNormal();
+	for (int PathNumber = 0; IsPathAtTarget(Target, MovingActor, ZPos, YPos, XPos, YPath, XPath); PathNumber++) {
+		FVector LastLocation;
+		if (PathNumber == 0) {
+			LastLocation = MovingActorLocation;
+		}
+		else {
+			LastLocation = Path.Last()->Center;
+		}
+		FVector Direction = (TargetLocation - LastLocation).GetSafeNormal();
 		int XDirection = RoundTo1OrNegative1(Direction.X);
 		int YDirection = RoundTo1OrNegative1(Direction.Y);
+		if (UDynamicObstacle::WithinArrayBounds(0, NumHeight, YPos + YDirection, NumColumns, XPos + XDirection, NumRows)) {
+			MyGridSquare::GridSquare square = Grid[0][YPos][XPos + XDirection];
+			float heuristicX = NULL, heuristicY = NULL;
+			if (square.contains != MyGridSquare::Obstacle) {
+				UE_LOG(LogTemp, Warning, TEXT("HX"));
+				FVector location = square.Center;
+				heuristicX = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+			}
+			square = Grid[0][YPos + YDirection][XPos];
+			if (square.contains != MyGridSquare::Obstacle) {
+				UE_LOG(LogTemp, Warning, TEXT("HY"));
+				FVector location = square.Center;
+				heuristicY = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+			}
+			FString fileText = FString::Printf(TEXT("Heuristic X: %d, Heuristic Y: %d"), heuristicX, heuristicY);
+			FString path = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Heuristics.txt"));
+			FFileHelper::SaveStringToFile(fileText, *path);
+			if (heuristicY && heuristicX < heuristicY) {
+				UE_LOG(LogTemp, Warning, TEXT("XPos: %d, YPos: %d"), XPos + XDirection, YPos);
+				DrawConnectingLine(LastLocation, Grid[0][YPos][XPos + XDirection].Center);
+				Path.Add(&Grid[0][YPos][XPos + XDirection]);
+				XPath += XDirection;
+			}
+			else if (heuristicX) {
+				UE_LOG(LogTemp, Warning, TEXT("XPos: %d, YPos: %d, Direction: %d, YPos Without: %d"), XPos, YPos + YDirection, YDirection, YPos);
+				DrawConnectingLine(LastLocation, Grid[0][YPos + YDirection][XPos].Center);
+				Path.Add(&Grid[0][YPos + YDirection][XPos]);
+				YPath += YDirection;
+			}
+		}
 
-		MyGridSquare::GridSquare square = Grid[ZPos][YPos][XPos + XDirection];
-		float heuristicX = NULL, heuristicY = NULL;
-		if (square.contains != MyGridSquare::Obstacle) {
-			FVector location = square.Center;
-			heuristicX = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
-		}
-		square = Grid[ZPos][YPos + YDirection][XPos];
-		if (square.contains != MyGridSquare::Obstacle) {
-			FVector location = square.Center;
-			heuristicY = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
-		}
-		if (heuristicY && heuristicX < heuristicY) {
-			Path.Add(&Grid[ZPos][YPos][XPos + XDirection]);
-			XPath++;
-		}
-		else if (heuristicX) {
-			Path.Add(&Grid[ZPos][YPos + YDirection][XPos]);
-			YPath++;
-		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("End of Path Creation"));
 	return Path;
 
 }
 
-bool ANavGraph::IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int&XPos) {
+bool ANavGraph::IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int&XPos, int YPath, int XPath) {
 	int MZPos, MYPos, MXPos;
 	GetPositionOnGrid(MovingActor, tileSize, ZPos, YPos, XPos);
 	GetPositionOnGrid(Target, tileSize, MZPos, MYPos, MXPos);
-	return (XPos == MXPos && YPos == MYPos);
+	YPos += YPath;
+	XPos += XPath;
+	FString fileText = FString::Printf(TEXT("Target Pos X: %d, Y: %d. Moving Pos X: %d, Y: %d"), MXPos, MYPos, XPos, YPos);
+	FString path = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("InfiniteLoop.txt"));
+	FFileHelper::SaveStringToFile(fileText, *path);
+	return !(XPos == MXPos && YPos == MYPos);
 }
 
 void ANavGraph::GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPos, int& YPos, int& XPos)
 {
-	AActor* owner = GetOwner();
 	FVector MovingObjectLocation = MovingObject->GetActorLocation();
-	FVector difference = MovingObjectLocation - owner->GetActorLocation();
+	FVector difference = MovingObjectLocation - GetActorLocation();
 	float ZOffset = MovingObject->GetComponentsBoundingBox().GetSize().Z;
 	ZPos = (difference.Z - ZOffset) / cellSize;
 	YPos = difference.Y / cellSize;
@@ -79,6 +101,7 @@ void ANavGraph::GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPo
 
 float ANavGraph::RoundTo1OrNegative1(float number)
 {
+	UE_LOG(LogTemp, Warning, TEXT("number: %.7f"), number);
 	if (number > 0) {
 		return 1;
 	}
@@ -87,6 +110,11 @@ float ANavGraph::RoundTo1OrNegative1(float number)
 		return -1;
 	}
 	return 0;
+}
+
+void ANavGraph::DrawConnectingLine(FVector LineStart, FVector LineEnd)
+{
+	DrawDebugLine(GetWorld(), LineStart, LineEnd, LineColor, false, UpdateDynamicObjectsPositionsInterval, LayerPriority, LineThickness);
 }
 
 // Sets default values
@@ -295,10 +323,10 @@ void ANavGraph::Tick(float DeltaTime)
 
 			DynamicObstacleList[DynamicObject]->Accept(*this);
 		}
-		//TArray<UTagetNavigation*> TargetNavigationList = DA_TargetNavigationList->GetRegisteredObjects();
-		//for (int MovingActor = 0; MovingActor < TargetNavigationList.Num(); MovingActor++) {
-		//	TargetNavigationList[MovingActor]->Accept(*this);
-		//}
+		TArray<UTagetNavigation*> TargetNavigationList = DA_TargetNavigationList->GetRegisteredObjects();
+		for (int MovingActor = 0; MovingActor < TargetNavigationList.Num(); MovingActor++) {
+			TargetNavigationList[MovingActor]->Accept(*this);
+		}
 	}
 }
 

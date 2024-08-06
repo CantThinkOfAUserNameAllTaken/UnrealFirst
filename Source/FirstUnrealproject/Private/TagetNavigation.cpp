@@ -3,6 +3,8 @@
 
 #include "TagetNavigation.h"
 #include "Interfaces\MyVisitor.h"
+#include "MyTargetNavigationList.h"
+#include "ActorList.h"
 
 
 // Sets default values for this component's properties
@@ -16,19 +18,29 @@ UTagetNavigation::UTagetNavigation()
 }
 void UTagetNavigation::Accept(IMyVisitor& visitor)
 {
-	TArray<MyGridSquare::GridSquare*> Path = visitor.Visit(*this, Target);
-	GoToTarget(Path);
+	if (!DA_PlayerList->GetRegisteredObjects().IsEmpty() && DA_PlayerList) {
+		Target = DA_PlayerList->GetRegisteredObjects()[0];
+		Path = visitor.Visit(*this, Target);
+		UE_LOG(LogTemp, Warning, TEXT("Path Length: %d"), Path.Num());
+		for (int i = 0; i < Path.Num(); i++) {
+			UE_LOG(LogTemp, Warning, TEXT("Path number: %d, Path: %s"), i, *Path[i]->Center.ToCompactString());
+		}
+		PathIndex = 0;
+		PathCompleted  = true;
+	}
+
 }
 
-void UTagetNavigation::GoToTarget(TArray<MyGridSquare::GridSquare*> Path)
+void UTagetNavigation::GoToTarget()
 {
 	AActor* MovingActor = GetOwner();
-	for (int PathNode = 0; PathNode < Path.Num(); PathNode++) {
-		FVector Objective = Path[PathNode]->Center;
-		while (MovingActor->GetActorLocation().X != Objective.X && MovingActor->GetActorLocation().Y != Objective.Y) {
-			MovingActor->SetActorLocation(FMath::VInterpConstantTo(MovingActor->GetActorLocation(), FVector(Objective.X, Objective.Y, MovingActor->GetActorLocation().Z), GetWorld()->GetDeltaSeconds(), Speed));
-		}
+	FVector Objective = Path[PathIndex]->Center;
+	MovingActor->SetActorLocation(FMath::VInterpConstantTo(MovingActor->GetActorLocation(), FVector(Objective.X, Objective.Y, MovingActor->GetActorLocation().Z), GetWorld()->GetDeltaSeconds(), Speed));
+	if (MovingActor->GetActorLocation().X == Objective.X && MovingActor->GetActorLocation().Y == Objective.Y) {
+		PathIndex++;
 	}
+	
+	
 }
 
 
@@ -37,8 +49,21 @@ void UTagetNavigation::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!DA_TargetNavigationList || !DA_PlayerList) {
+		return;
+	}
+	DA_TargetNavigationList->RegisterObject(this);
 	// ...
 	
+}
+
+void UTagetNavigation::BeginDestroy()
+{
+	Super::BeginDestroy();
+	if (!DA_TargetNavigationList) {
+		return;
+	}
+	DA_TargetNavigationList->DeregisterObject(this);
 }
 
 
@@ -46,7 +71,9 @@ void UTagetNavigation::BeginPlay()
 void UTagetNavigation::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	if (PathCompleted && PathIndex < Path.Num()) {
+		GoToTarget();
+	}
 	// ...
 }
 

@@ -4,6 +4,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/MyVisitor.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "NavGraph.generated.h"
 
 using namespace std;
@@ -25,7 +27,7 @@ public:
 
 	void Visit(UDynamicObstacle& dynamicObstacle) override;
 	TArray<MyGridSquare::GridSquare*> Visit(UTagetNavigation& Navigator, AActor* Target) override;
-	bool IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int& XPos);
+	bool IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int& XPos,int YPath, int XPath);
 	void GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPos, int& YPos, int& XPos);
 	// Sets default values for this actor's proper
 	ANavGraph();
@@ -114,6 +116,11 @@ private:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChnagedEvent) override;
 
 	float RoundTo1OrNegative1(float number);
+
+	void DrawConnectingLine(FVector LineStart, FVector LineEnd);
+
+	UPROPERTY(EditAnywhere)
+	FColor LineColor;
 
 public:
 	// Called every frame

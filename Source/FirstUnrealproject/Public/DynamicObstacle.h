@@ -38,7 +38,7 @@ public:
 	void UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector originalPos, float cellSize, int arrayZ, int arrayY, int arrayX);
 	bool NotAlreadyObstacle(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos);
 	void StoreCurrentPosition(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos);
-	bool WithinArrayBounds(int ZPos, int arrayZ, int YPos, int arrayY, int XPos, int arrayX);
+	static bool WithinArrayBounds(int ZPos, int arrayZ, int YPos, int arrayY, int XPos, int arrayX);
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 

@@ -8,6 +8,8 @@
 #include "MyGridSquare.h"
 #include "TagetNavigation.generated.h"
 class IMyVisitor;
+class UMyTargetNavigationList;
+class UActorList;
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -21,19 +23,32 @@ public:
 
 	FVector distanceFromTarget;
 
-	void GoToTarget(TArray<MyGridSquare::GridSquare*> Path);
+	void GoToTarget();
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	virtual void BeginDestroy() override;
+
 private:
 	
 	UPROPERTY(EditAnywhere)
 	float Speed;
-	
-	UPROPERTY(EditAnywhere)
 	AActor* Target;
+
+	UPROPERTY(EditAnywhere)
+	UMyTargetNavigationList* DA_TargetNavigationList;
+
+	UPROPERTY(EditAnywhere)
+	UActorList* DA_PlayerList;
+
+	bool PathCompleted = false;
+
+	TArray<MyGridSquare::GridSquare*> Path;
+
+	int PathIndex = 0;
+
 public:	
 	// Called every frame
 	void Accept(IMyVisitor& visitor) override;
