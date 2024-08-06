@@ -21,12 +21,18 @@ void UTagetNavigation::Accept(IMyVisitor& visitor)
 	if (!DA_PlayerList->GetRegisteredObjects().IsEmpty() && DA_PlayerList) {
 		Target = DA_PlayerList->GetRegisteredObjects()[0];
 		Path = visitor.Visit(*this, Target);
-		UE_LOG(LogTemp, Warning, TEXT("Path Length: %d"), Path.Num());
-		for (int i = 0; i < Path.Num(); i++) {
-			UE_LOG(LogTemp, Warning, TEXT("Path number: %d, Path: %s"), i, *Path[i]->Center.ToCompactString());
+		if (!Path.IsEmpty()) {
+
+			UE_LOG(LogTemp, Warning, TEXT("Path Length: %d"), Path.Num());
+			for (int i = Path.Num() - 1; i > -1; i--) {
+				UE_LOG(LogTemp, Warning, TEXT("Path number: %d, Path: %s"), i, *Path[i]->Center.ToCompactString());
+			}
+			PathIndex = Path.Num() - 1;
+			PathCompleted = true;
+			return;
 		}
 		PathIndex = 0;
-		PathCompleted  = true;
+		PathCompleted = false;
 	}
 
 }
@@ -37,7 +43,7 @@ void UTagetNavigation::GoToTarget()
 	FVector Objective = Path[PathIndex]->Center;
 	MovingActor->SetActorLocation(FMath::VInterpConstantTo(MovingActor->GetActorLocation(), FVector(Objective.X, Objective.Y, MovingActor->GetActorLocation().Z), GetWorld()->GetDeltaSeconds(), Speed));
 	if (MovingActor->GetActorLocation().X == Objective.X && MovingActor->GetActorLocation().Y == Objective.Y) {
-		PathIndex++;
+		PathIndex--;
 	}
 	
 	
@@ -71,7 +77,7 @@ void UTagetNavigation::BeginDestroy()
 void UTagetNavigation::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (PathCompleted && PathIndex < Path.Num()) {
+	if (PathCompleted && PathIndex > -1) {
 		GoToTarget();
 	}
 	// ...

@@ -15,6 +15,14 @@ class UMyDyanmicObjectList;
 class UTagetNavigation;
 class UMyTargetNavigationList;
 
+struct Node {
+	int x, y;
+	float gCost, hCost, fCost;
+	Node* Parent;
+
+	Node(int x, int y)
+		: x(x), y(y), gCost(0), hCost(0), fCost(0), Parent(nullptr) {}
+};
 
 UCLASS()
 class FIRSTUNREALPROJECT_API ANavGraph : public AActor, public IMyVisitor
@@ -24,6 +32,8 @@ class FIRSTUNREALPROJECT_API ANavGraph : public AActor, public IMyVisitor
 public:
 
 
+
+	float CalculateHeuristic(int x, int y, int endX, int endY);
 
 	void Visit(UDynamicObstacle& dynamicObstacle) override;
 	TArray<MyGridSquare::GridSquare*> Visit(UTagetNavigation& Navigator, AActor* Target) override;

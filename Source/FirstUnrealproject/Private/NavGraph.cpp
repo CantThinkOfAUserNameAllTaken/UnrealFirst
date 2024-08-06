@@ -8,11 +8,21 @@
 #include "DynamicObstacle.h"
 #include <iostream>
 #include <string>
+#include <queue>
+#include "Containers/Array.h"
 #include "MyDynamicObjectList.h"
 #include "TagetNavigation.h"
 #include "MyTargetNavigationList.h"
 
-//ANavGraph* ANavGraph::instance = nullptr;
+struct CompareNode {
+	bool operator()(Node* const& n1, Node* const& n2) {
+		if (n1->fCost == n2->fCost) {
+			return n1->hCost > n2->hCost;
+		}
+		return n1->fCost > n2->fCost;
+	}
+};
+
 
 void ANavGraph::Visit(UDynamicObstacle& dynamicObstacle)
 {
@@ -23,58 +33,63 @@ TArray<MyGridSquare::GridSquare*> ANavGraph::Visit(UTagetNavigation& Navigator, 
 {
 	UE_LOG(LogTemp, Warning, TEXT("start of Path Creation"));
 	TArray<MyGridSquare::GridSquare*> Path;
+	std::priority_queue<Node*, std::vector<Node*>, CompareNode> VisitedNodes;
 	AActor* MovingActor = Navigator.GetOwner();
 	FVector MovingActorLocation = MovingActor->GetActorLocation();
 	FVector TargetLocation = Target->GetActorLocation();
-	int ZPos, YPos, XPos;
-	int XPath = 0, YPath = 0;
-	for (int PathNumber = 0; IsPathAtTarget(Target, MovingActor, ZPos, YPos, XPos, YPath, XPath); PathNumber++) {
-		FVector LastLocation;
-		if (PathNumber == 0) {
-			LastLocation = MovingActorLocation;
+	int startZ, startY, startX;
+	GetPositionOnGrid(MovingActor, tileSize, startZ, startY, startX);
+	Node startNode(startX, startY);
+	int endZ, endY, endX;
+	GetPositionOnGrid(Target, tileSize, endZ, endY, endX);
+	Node goalNode(endX, endY);
+	startNode.hCost = CalculateHeuristic(startNode.x, startNode.y, goalNode.x, goalNode.y);
+	VisitedNodes.push(&startNode);
+	while (!VisitedNodes.empty()) {
+		Node* CurrentNode = VisitedNodes.top();
+		VisitedNodes.pop();
+		if (VisitedNodes.size() > 10000) {
+			return Path;
 		}
-		else {
-			LastLocation = Path.Last()->Center;
+		if (CurrentNode->hCost == goalNode.hCost) {
+			while (CurrentNode != &startNode) {
+				Path.Add(&Grid[0][CurrentNode->y][CurrentNode->x]);
+				CurrentNode = CurrentNode->Parent;
+				DrawConnectingLine(Path.Last()->Center, Grid[0][CurrentNode->y][CurrentNode->x].Center);
+		    }
+			//for (int i = 0; i < VisitedNodes.size(); i++) {
+			//	delete VisitedNodes.top();
+			//}
+			return Path;
 		}
-		FVector Direction = (TargetLocation - LastLocation).GetSafeNormal();
-		int XDirection = RoundTo1OrNegative1(Direction.X);
-		int YDirection = RoundTo1OrNegative1(Direction.Y);
-		if (UDynamicObstacle::WithinArrayBounds(0, NumHeight, YPos + YDirection, NumColumns, XPos + XDirection, NumRows)) {
-			MyGridSquare::GridSquare square = Grid[0][YPos][XPos + XDirection];
-			float heuristicX = NULL, heuristicY = NULL;
-			if (square.contains != MyGridSquare::Obstacle) {
-				UE_LOG(LogTemp, Warning, TEXT("HX"));
-				FVector location = square.Center;
-				heuristicX = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
+		int directions[8][2] = { {1,0}, { 1,1 },{0,1}, { 1, -1 }, {-1, 1}, {-1,-1}, {-1, 0}, {0, -1} };
+		for (auto& direction : directions) {
+			Node* neibour = new Node(CurrentNode->x + direction[0], CurrentNode->y + direction[1]);
+			if (!UDynamicObstacle::WithinArrayBounds(0, NumHeight, neibour->y, NumColumns, neibour->x, NumRows)
+				|| Grid[0][neibour->y][neibour->x].contains == MyGridSquare::Obstacle) {
+				continue;
 			}
-			square = Grid[0][YPos + YDirection][XPos];
-			if (square.contains != MyGridSquare::Obstacle) {
-				UE_LOG(LogTemp, Warning, TEXT("HY"));
-				FVector location = square.Center;
-				heuristicY = std::sqrt(((location.X - TargetLocation.X) * (location.X - TargetLocation.X)) + ((location.Y - TargetLocation.Y) * (location.Y - TargetLocation.Y)));
-			}
-			FString fileText = FString::Printf(TEXT("Heuristic X: %d, Heuristic Y: %d"), heuristicX, heuristicY);
-			FString path = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Heuristics.txt"));
-			FFileHelper::SaveStringToFile(fileText, *path);
-			if (heuristicY && heuristicX < heuristicY) {
-				UE_LOG(LogTemp, Warning, TEXT("XPos: %d, YPos: %d"), XPos + XDirection, YPos);
-				DrawConnectingLine(LastLocation, Grid[0][YPos][XPos + XDirection].Center);
-				Path.Add(&Grid[0][YPos][XPos + XDirection]);
-				XPath += XDirection;
-			}
-			else if (heuristicX) {
-				UE_LOG(LogTemp, Warning, TEXT("XPos: %d, YPos: %d, Direction: %d, YPos Without: %d"), XPos, YPos + YDirection, YDirection, YPos);
-				DrawConnectingLine(LastLocation, Grid[0][YPos + YDirection][XPos].Center);
-				Path.Add(&Grid[0][YPos + YDirection][XPos]);
-				YPath += YDirection;
-			}
+			neibour->Parent = CurrentNode;
+			neibour->gCost = CurrentNode->gCost + direction[0] != 0 && direction[1] != 0 ? std::sqrt(2) : 1;
+			neibour->hCost = CalculateHeuristic(neibour->x, neibour->y, goalNode.x, goalNode.y);
+			neibour->fCost = neibour->gCost + neibour->hCost;
+			VisitedNodes.push(neibour);
 		}
-
 	}
+
+
 	UE_LOG(LogTemp, Warning, TEXT("End of Path Creation"));
 	return Path;
 
 }
+
+float ANavGraph::CalculateHeuristic(int x, int y, int endX, int endY) {
+	int dx = std::abs(x - endX);
+	int dy = std::abs(y - endY);
+	return dx + dy + (std::sqrt(2) - 2) * std::min(dx, dy);
+}
+
+
 
 bool ANavGraph::IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, int& YPos, int&XPos, int YPath, int XPath) {
 	int MZPos, MYPos, MXPos;
