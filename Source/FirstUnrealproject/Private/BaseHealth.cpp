@@ -37,7 +37,6 @@ void UBaseHealth::TakeDamage(int amount)
 	if (_currentHealth == 0) {
 		OnDeath();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Taken Damage"));
 }
 
 void UBaseHealth::OnDeath()

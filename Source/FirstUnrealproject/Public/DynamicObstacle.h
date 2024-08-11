@@ -35,7 +35,7 @@ private:
 
 public:	
 	void Accept(IMyVisitor& visitor) override;
-	void UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector originalPos, float cellSize, int arrayZ, int arrayY, int arrayX);
+	FVector UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector originalPos, float cellSize, int arrayZ, int arrayY, int arrayX);
 	bool NotAlreadyObstacle(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos);
 	void StoreCurrentPosition(MyGridSquare::GridSquare***& grid, int ZPos, int YPos, int XPos);
 	static bool WithinArrayBounds(int ZPos, int arrayZ, int YPos, int arrayY, int XPos, int arrayX);

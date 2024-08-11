@@ -45,19 +45,13 @@ void UBaseAIShooting::SpawnBullet()
 bool UBaseAIShooting::TargetFound()
 {
 	if (DA_Target == NULL) {
-		UE_LOG(LogTemp, Error, TEXT("DA_Target not set!"));
 		return false;
 	}
 	TArray<AActor*> targets = DA_Target->GetRegisteredObjects();
 	if (targets.IsEmpty()) {
-		UE_LOG(LogTemp, Error, TEXT("targets is empty!"));
 		return false;
 	}
 	else if (targets.Num() > 1) {
-		UE_LOG(LogTemp, Error, TEXT("targets has more than one element"));
-		for (int i = 0; i < targets.Num(); i++) {
-			UE_LOG(LogTemp, Warning, TEXT("name: %s"), *targets[i]->GetName());
-		}
 		return false;
 	}
 	return true;

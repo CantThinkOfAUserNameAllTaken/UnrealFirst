@@ -23,10 +23,6 @@ void UTagetNavigation::Accept(IMyVisitor& visitor)
 		Path = visitor.Visit(*this, Target);
 		if (!Path.IsEmpty()) {
 
-			UE_LOG(LogTemp, Warning, TEXT("Path Length: %d"), Path.Num());
-			for (int i = Path.Num() - 1; i > -1; i--) {
-				UE_LOG(LogTemp, Warning, TEXT("Path number: %d, Path: %s"), i, *Path[i]->Center.ToCompactString());
-			}
 			PathIndex = Path.Num() - 1;
 			PathCompleted = true;
 			return;

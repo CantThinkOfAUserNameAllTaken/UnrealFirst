@@ -59,4 +59,9 @@ protected:
 	float MinYLookHeight;
 
 	APlayerController* playerController;
+
+	UPROPERTY(EditAnywhere)
+	APawn* TurrentSpawner;
+
+	void PossesTurret();
 };

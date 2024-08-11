@@ -59,7 +59,6 @@ void AMovingCube::RotateOnY(float Input)
 }
 void AMovingCube::Shoot()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Shooting bullet %s"), *BP_bullet->GetName());
 	FActorSpawnParameters spawnParams;
 	spawnParams.Owner = this;
 	spawnParams.Instigator = GetInstigator();
@@ -67,6 +66,11 @@ void AMovingCube::Shoot()
 		GetActorLocation(), GetActorRotation(), spawnParams);
 	bullet->cameraFacingDirection = camera->GetForwardVector();
 	bullet->Shoot();
+}
+void AMovingCube::PossesTurret()
+{
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	PlayerController->Possess(TurrentSpawner);
 }
 // Called to bind functionality to input
 void AMovingCube::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -78,5 +82,6 @@ void AMovingCube::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("TurnCameraX", this, &AMovingCube::RotateOnX);
 	PlayerInputComponent->BindAxis("TurnCameraY", this, &AMovingCube::RotateOnY);
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, &AMovingCube::Shoot);
+	PlayerInputComponent->BindAction("PossessTurret", IE_Pressed, this, &AMovingCube::PossesTurret);
 }
 

@@ -80,7 +80,7 @@ private:
 
 	MyGridSquare::GridSquare CreateSquare(FVector& start, float cellSize);
 
-	void DebugShowObstacle(FVector center);
+	void DebugShowObstacle(FVector center, bool Permanent, float LifeTime);
 	UPROPERTY(EditAnywhere)
 	int NumRows;
 

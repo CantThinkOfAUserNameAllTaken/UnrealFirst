@@ -41,16 +41,9 @@ void APlayerBullet::Tick(float DeltaTime)
 
 void APlayerBullet::OnHit(UPrimitiveComponent* HitComponent,
 	AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector normalImpulse, const FHitResult& Hit) {
-	UE_LOG(LogTemp, Warning, TEXT("Hit"));
 	if (OtherActor->Tags.Contains(TagToHit)) {
 		UEnemyHealth* enemyHealth = OtherActor->FindComponentByClass<UEnemyHealth>();
 		enemyHealth->TakeDamage(DamageDealt);
-	}
-	else {
-		for (const FName& tag : OtherActor->Tags) {
-			UE_LOG(LogTemp, Warning, TEXT("Tag: %s"), *tag.ToString());
-		}
-
 	}
 
 	

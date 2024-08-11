@@ -26,12 +26,18 @@ struct CompareNode {
 
 void ANavGraph::Visit(UDynamicObstacle& dynamicObstacle)
 {
-	dynamicObstacle.UpdateObstaclePositionOnGrid(Grid, GetActorLocation(), tileSize, NumHeight, NumColumns, NumRows);
+	FVector ObstaclePosition = dynamicObstacle.UpdateObstaclePositionOnGrid(
+		Grid,
+		GetActorLocation(),
+		tileSize,
+		NumHeight,
+		NumColumns,
+		NumRows);
+	DebugShowObstacle(ObstaclePosition, false, UpdateDynamicObjectsPositionsInterval);
 }
 
 TArray<MyGridSquare::GridSquare*> ANavGraph::Visit(UTagetNavigation& Navigator, AActor* Target)
 {
-	UE_LOG(LogTemp, Warning, TEXT("start of Path Creation"));
 	TArray<MyGridSquare::GridSquare*> Path;
 	std::priority_queue<Node*, std::vector<Node*>, CompareNode> VisitedNodes;
 	AActor* MovingActor = Navigator.GetOwner();
@@ -77,8 +83,6 @@ TArray<MyGridSquare::GridSquare*> ANavGraph::Visit(UTagetNavigation& Navigator, 
 		}
 	}
 
-
-	UE_LOG(LogTemp, Warning, TEXT("End of Path Creation"));
 	return Path;
 
 }
@@ -97,9 +101,6 @@ bool ANavGraph::IsPathAtTarget(AActor* Target, AActor* MovingActor, int& ZPos, i
 	GetPositionOnGrid(Target, tileSize, MZPos, MYPos, MXPos);
 	YPos += YPath;
 	XPos += XPath;
-	FString fileText = FString::Printf(TEXT("Target Pos X: %d, Y: %d. Moving Pos X: %d, Y: %d"), MXPos, MYPos, XPos, YPos);
-	FString path = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("InfiniteLoop.txt"));
-	FFileHelper::SaveStringToFile(fileText, *path);
 	return !(XPos == MXPos && YPos == MYPos);
 }
 
@@ -116,7 +117,6 @@ void ANavGraph::GetPositionOnGrid(AActor* MovingObject, float cellSize, int& ZPo
 
 float ANavGraph::RoundTo1OrNegative1(float number)
 {
-	UE_LOG(LogTemp, Warning, TEXT("number: %.7f"), number);
 	if (number > 0) {
 		return 1;
 	}
@@ -219,7 +219,7 @@ MyGridSquare::GridCanContain ANavGraph::SquareContains(FVector boxCenter, float 
 	if (!bHit) {
 		return MyGridSquare::GridCanContain(MyGridSquare::Empty);
 	}
-	DebugShowObstacle(boxCenter);
+	DebugShowObstacle(boxCenter, true, -1);
 	return MyGridSquare::GridCanContain(MyGridSquare::Obstacle);
 }
 
@@ -234,10 +234,10 @@ void ANavGraph::DoesCubeContainStaticActor(bool& bHit,
 
 
 
-void ANavGraph::DebugShowObstacle(FVector center)
+void ANavGraph::DebugShowObstacle(FVector center, bool Permanent, float LifeTime)
 {
 	DrawDebugSphere(GetWorld(), center, ObstacleSphereRadius, ObstacleSphereDetail,
-		ObstacleSphereColor, ShowGrid, -1, LayerPriority, LineThickness);
+		ObstacleSphereColor, Permanent, LifeTime, LayerPriority, LineThickness);
 }
 
 void ANavGraph::DrawDebugGrid(FVector startPosition, int totalRows,

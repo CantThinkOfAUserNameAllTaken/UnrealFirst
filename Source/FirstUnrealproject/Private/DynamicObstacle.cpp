@@ -48,28 +48,24 @@ void UDynamicObstacle::Accept(IMyVisitor& visitor)
 	visitor.Visit(*this);
 }
 
-void UDynamicObstacle::UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector OriginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
+FVector UDynamicObstacle::UpdateObstaclePositionOnGrid(MyGridSquare::GridSquare***& grid, FVector OriginalPos, float cellSize, int arrayZ, int arrayY, int arrayX)
 {
 	int ZPos, YPos, XPos;
+	FVector Location = FVector(0, 0 , 0);
 	UpdatePositionOnGrid(OriginalPos, cellSize, ZPos, YPos, XPos);
 
 	if (WithinArrayBounds(ZPos, arrayZ, YPos, arrayY, XPos, arrayX)) {
 
 		DeregisterLastObstaclePosition();
 		if (NotAlreadyObstacle(grid, ZPos, YPos, XPos)) {
-			UE_LOG(LogTemp, Warning,
-				TEXT("adding to function XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"),
-				XPos, YPos, ZPos, arrayX);
 			grid[ZPos][YPos][XPos].SetContains(MyGridSquare::Obstacle);
 			StoreCurrentPosition(grid, ZPos, YPos, XPos);
-			return;
+			Location = grid[ZPos][YPos][XPos].Center;
+			return Location;
 		}
-		return;
+		return Location ;
 	}
-	UE_LOG(LogTemp, Warning,
-		TEXT("OutOfBounds XPos: %d, YPos: %d, ZPos: %d, Xarray: %d"),
-		XPos, YPos, ZPos, arrayX);
-	return;
+	return Location;
 
 
 }
@@ -83,7 +79,7 @@ void UDynamicObstacle::UpdatePositionOnGrid(FVector OriginalPos, float cellSize,
 	AActor* Owner = GetOwner();
 	FVector difference = GetOwner()->GetActorLocation() - OriginalPos;
 	float ZOffset = GetOwner()->GetComponentsBoundingBox().GetSize().Z;
-	ZPos = (difference.Z - ZOffset) / cellSize;
+	ZPos = 0;//(difference.Z - ZOffset) / cellSize;
 	YPos = difference.Y / cellSize;
 	XPos = difference.X / cellSize;
 }
