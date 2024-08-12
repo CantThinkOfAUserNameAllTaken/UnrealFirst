@@ -4,6 +4,7 @@
 #include "TurretPlacer.h"
 #include "camera/cameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "MyTurretDetection.h"
 
 // Sets default values
 ATurretPlacer::ATurretPlacer()
@@ -19,6 +20,9 @@ ATurretPlacer::ATurretPlacer()
 	ParentCube = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ParentTurret"));
 	ParentCube->SetupAttachment(arm);
 	ParentCube->SetStaticMesh(mesh);
+
+	detectionController = CreateDefaultSubobject<UMyTurretDetection>(TEXT("Turret Detection"));
+	detectionController->TurretCenter = ParentCube;
 }
 
 // Called when the game starts or when spawned

@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "TurretPlacer.generated.h"
 
+class UMyTurretDetection;
 UCLASS()
 class FIRSTUNREALPROJECT_API ATurretPlacer : public APawn
 {
@@ -42,5 +43,8 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* mesh;
+
+	UPROPERTY(EditAnywhere)
+	UMyTurretDetection* detectionController;
 
 };
