@@ -26,7 +26,7 @@ void UMyTurretDetection::BeginPlay()
 void UMyTurretDetection::CalculateDetectionRadius()
 {
 	FVector TurretPosition = TurretCenter->GetComponentLocation();
-	FVector ForwardDirection = TurretCenter->GetForwardVector();
+	FVector ForwardDirection = TurretCenter->GetUpVector();
 	endPoint = ForwardDirection * DetectionRadius;
 	float angle = FMath::DegreesToRadians(DetectionWidth);
 	FMatrix rotationMatrix = FMatrix
@@ -38,11 +38,12 @@ void UMyTurretDetection::CalculateDetectionRadius()
 	PositiveTopOuterBounds = (PositiveDirection * DetectionRadius) + (TurretPosition + DetectionHeight/2);
 	PositiveBottomOuterBounds = PositiveTopOuterBounds;
 	PositiveBottomOuterBounds.Z -= DetectionHeight;
-
+	DrawDebugSphere(GetWorld(), PositiveTopOuterBounds, 2, 8, FColor::Black, false, 10, 3);
 	NegativeDirection = -rotationMatrix.TransformVector(ForwardDirection);
 	NegativeTopOuterBounds = (NegativeDirection * DetectionRadius) + (TurretPosition + DetectionHeight/2);
 	NegativeBottomOuterBounds = NegativeTopOuterBounds;
 	NegativeBottomOuterBounds.Z -= DetectionHeight;
+	DrawDebugSphere(GetWorld(), NegativeTopOuterBounds, 2, 8, FColor::Black, false, 10, 3);
 	LastPosition = GetOwner()->GetActorLocation();
 }
 
