@@ -19,6 +19,8 @@ public:
 
 	void CreateMesh();
 
+
+
 protected:
 	FVector ClosestPoint(FVector point, TArray<FVector> Points);
 
@@ -26,10 +28,15 @@ protected:
 		Vertex* prev;
 		Vertex* next;
 		FVector point;
-
+		float angle;
 		Vertex(Vertex* PreviousVertex, Vertex* NextVertex, FVector point) :
-			prev(PreviousVertex), next(NextVertex), point(point){}
+			prev(PreviousVertex), next(NextVertex), point(point), angle(0.0f){}
 	};
 
+	TArray<Vertex*> ReflexPoints;
+
+	float CalculateWedge(FVector Dir1, FVector Dir2);
+	bool DoesPointContainTriangle(UMyMeshGenerator::Vertex* Last, FVector point);
+	bool AreReflexPointsInTriangle(Vertex* Last);
 	
 };
