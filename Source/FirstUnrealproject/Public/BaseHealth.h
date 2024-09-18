@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Delegates/DelegateCombinations.h"
 #include "BaseHealth.generated.h"
 
 
@@ -19,12 +20,12 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	UPROPERTY(BlueprintReadOnly)
-	int _currentHealth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int _currentHealth = _maxHealth;
 
 	UPROPERTY(EditAnywhere, Category = "Health", meta = (DisplayName = "Max Health"))
 	int _maxHealth = 0;
-	DECLARE_MULTICAST_DELEGATE(FOnHealthChangedSignature);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, int, _currentHealth);
 
 public:	
 	// Called every frame
@@ -33,5 +34,5 @@ public:
 	virtual void TakeDamage(int amount);
 	UFUNCTION()
 	virtual void OnDeath();
-	FOnHealthChangedSignature OnHealthChanged();
+	FOnHealthChangedSignature OnHealthChanged;
 };

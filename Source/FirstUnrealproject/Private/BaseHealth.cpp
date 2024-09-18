@@ -34,6 +34,7 @@ void UBaseHealth::TickComponent(float DeltaTime, ELevelTick TickType, FActorComp
 void UBaseHealth::TakeDamage(int amount)
 {
 	_currentHealth -= amount;
+	OnHealthChanged.Broadcast(_currentHealth);
 	if (_currentHealth == 0) {
 		OnDeath();
 	}

@@ -7,6 +7,7 @@
 #include "TurretPlacer.generated.h"
 
 class UMyTurretDetection;
+class USpringArmComponent;
 UCLASS()
 class FIRSTUNREALPROJECT_API ATurretPlacer : public APawn
 {
@@ -46,5 +47,16 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	UMyTurretDetection* detectionController;
+
+	UPROPERTY(EditAnywhere)
+	USpringArmComponent* arm;
+
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* TopTurret;
+
+	UFUNCTION()
+	void RotateTurret(float Input);
+
+	float YawAdjustment = 0;
 
 };

@@ -9,9 +9,17 @@
 /**
  * 
  */
+class UMyPlayerUI;
 UCLASS()
 class FIRSTUNREALPROJECT_API UPlayerHealth : public UBaseHealth
 {
 	GENERATED_BODY()
-	
+protected:
+
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere)
+	UMyPlayerUI* PlayerUI;
+
+
 };
