@@ -19,16 +19,44 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void CreateBezierLine();
+	void CreateBezierLine(bool Pernament);
+
+	void UpdateLineNormals(float Input);
 
 	FVector LastBuildLocation;
 	FVector LastBuildNormal = FVector::UpVector;
 
+	FVector MousePosition;
+	FVector MouseNormal;
 	APlayerController* PlayerController;
 
 	virtual void PossessedBy(AController* NewController) override;
 
 	bool Possessed = false;
+
+	void DrawNewLine();
+
+	float NormalMultiplyer = 0;
+
+	class UProceduralMeshComponent* mesh;
+
+	void CreateMesh(FVector LastPosition, FVector Position, float Time);
+
+	FVector GetTangent(float Time);
+
+	UPROPERTY(EditAnywhere)
+	float BoxSize;
+
+private:
+	struct Square {
+		TArray<FVector> Vertices;
+		TArray<int> Triangles;
+	    public :
+			FVector TopLeft;
+			FVector TopRight;
+			FVector BottomLeft;
+			FVector BottomRight;
+	};
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
