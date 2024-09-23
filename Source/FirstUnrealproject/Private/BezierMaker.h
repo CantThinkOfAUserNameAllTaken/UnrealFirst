@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "BezierMaker.generated.h"
+class UCameraComponent;
 
 UCLASS()
 class ABezierMaker : public APawn
@@ -14,6 +15,9 @@ class ABezierMaker : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ABezierMaker();
+
+	//UPROPERTY(EditAnywhere)
+	//UCameraComponent* Camera;
 
 protected:
 	// Called when the game starts or when spawned
@@ -38,9 +42,11 @@ protected:
 
 	float NormalMultiplyer = 0;
 
+	UPROPERTY(EditAnywhere)
 	class UProceduralMeshComponent* mesh;
 
-	void CreateMesh(FVector LastPosition, FVector Position, float Time);
+
+	void CreateMesh(FVector LastPosition, FVector Position, float Time, int MeshTempIndex);
 
 	FVector GetTangent(float Time);
 
@@ -51,12 +57,34 @@ private:
 	struct Square {
 		TArray<FVector> Vertices;
 		TArray<int> Triangles;
+		TArray<FColor> Color;
+
+		TArray<FVector> Normal;
 	    public :
 			FVector TopLeft;
 			FVector TopRight;
 			FVector BottomLeft;
 			FVector BottomRight;
+			void Triangulate(FVector NormalDirection) {
+				Vertices.Add(TopLeft);
+				Vertices.Add(TopRight);
+				Vertices.Add(BottomLeft);
+				Vertices.Add(BottomRight);
+
+				Triangles.Add(3);
+				Triangles.Add(1);
+				Triangles.Add(0);
+				Triangles.Add(3);
+				Triangles.Add(0);
+				Triangles.Add(2);
+
+				for (int i = 0; i < 4; i++) {
+					Normal.Add(NormalDirection);
+					Color.Add(FColor::Red);
+				}
+		}
 	};
+	int MeshIndex = 0;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

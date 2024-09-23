@@ -3,13 +3,22 @@
 
 #include "BezierMaker.h"
 #include "ProceduralMeshComponent.h"
+#include "camera/cameraComponent.h"
 
 // Sets default values
 ABezierMaker::ABezierMaker()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	//Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	//Camera->SetupAttachment(RootComponent);
 	mesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Mesh"));
+
+
+
+	mesh->SetupAttachment(RootComponent);
+
 
 }
 
@@ -28,10 +37,7 @@ void ABezierMaker::CreateBezierLine(bool Pernament)
 
 	FVector MouseDirection;
 	PlayerController->DeprojectMousePositionToWorld(MousePosition, MouseDirection);
-	FHitResult hit;
-	bool bhit = GetWorld()->LineTraceSingleByChannel(hit, MousePosition, MousePosition + (MouseDirection * 100000), ECC_Visibility);
-	MousePosition = hit.Location;
-	//MousePosition.X = LastBuildLocation.X;
+	MousePosition = MousePosition + (MouseDirection * 1650);
 
 	FVector DirToMouse = (MousePosition - LastBuildLocation).GetSafeNormal();
 	MouseNormal = DirToMouse.Cross(GetActorForwardVector()).GetSafeNormal();
@@ -41,6 +47,7 @@ void ABezierMaker::CreateBezierLine(bool Pernament)
 	UE_LOG(LogTemp, Warning, TEXT("MousePosition: %s, LastBuildPosition: %s"), *MouseNormal.ToCompactString(), *LastBuildNormal.ToCompactString());
 	float Time = 0;
 	FVector LastPosition = LastBuildLocation;
+	int TempMeshIndex = MeshIndex;
 	while (Time <= 1) {
 		FVector A = FMath::Lerp(LastBuildLocation, LastBuildNormal, Time);
 		FVector B = FMath::Lerp(LastBuildNormal, MouseNormal, Time);
@@ -49,11 +56,15 @@ void ABezierMaker::CreateBezierLine(bool Pernament)
 		FVector E = FMath::Lerp(B, C, Time);
 		FVector Position = FMath::Lerp(D, E, Time);
 		if (LastPosition != Position) {
-			CreateMesh(LastPosition, Position, Time);
+			CreateMesh(LastPosition, Position, Time, TempMeshIndex);
+			TempMeshIndex += 6;
 		}
 		DrawDebugLine(GetWorld(), LastPosition, Position, FColor::Black, Pernament, 0.1f, 3, 3);
 		LastPosition = Position;
 		Time += 0.005f;
+	}
+	if (Pernament) {
+		MeshIndex = TempMeshIndex;
 	}
 
 
@@ -81,7 +92,7 @@ void ABezierMaker::DrawNewLine()
 	LastBuildNormal = MouseNormal;
 }
 
-void ABezierMaker::CreateMesh(FVector LastPosition, FVector Position, float Time)
+void ABezierMaker::CreateMesh(FVector LastPosition, FVector Position, float Time, int TempMeshIndex)
 {
 	FVector Tangent = GetTangent(Time).GetSafeNormal();
 	FRotator NormalRotation = FRotator(0, 0, 90);
@@ -121,8 +132,26 @@ void ABezierMaker::CreateMesh(FVector LastPosition, FVector Position, float Time
 	BackFace.TopRight = TopFace.TopRight;
 	BackFace.BottomLeft = BottomFace.TopLeft;
 	BackFace.BottomRight = BottomFace.TopRight;
-	//TODO -- Create Triangulate and Vertex function. pick a point then calculate triangles from it, 321, 302;
-	//Create Mesh Section for each face, figure out what UVs, and tangents do;
+	TopFace.Triangulate(-Normal);
+	BottomFace.Triangulate(Normal);
+	LeftFace.Triangulate(Forward);
+	RightFace.Triangulate(-Forward);
+	FrontFace.Triangulate(Tangent);
+	BackFace.Triangulate(-Tangent);
+	TArray<FVector2D> UV;
+	TArray<FProcMeshTangent> Tangents;
+	mesh->CreateMeshSection(TempMeshIndex, TopFace.Vertices, TopFace.Triangles, TopFace.Normal, UV, TopFace.Color, Tangents, false);
+	TempMeshIndex++;
+	mesh->CreateMeshSection(TempMeshIndex, BottomFace.Vertices, BottomFace.Triangles, BottomFace.Normal, UV, BottomFace.Color, Tangents, false);
+	TempMeshIndex++;
+	mesh->CreateMeshSection(TempMeshIndex, LeftFace.Vertices, LeftFace.Triangles, LeftFace.Normal, UV, LeftFace.Color, Tangents, false);
+	TempMeshIndex;
+	mesh->CreateMeshSection(TempMeshIndex, RightFace.Vertices, RightFace.Triangles, RightFace.Normal, UV, RightFace.Color, Tangents, false);
+	TempMeshIndex++;
+	mesh->CreateMeshSection(TempMeshIndex, FrontFace.Vertices, FrontFace.Triangles, FrontFace.Normal, UV, FrontFace.Color, Tangents, false);
+	TempMeshIndex++;
+	mesh->CreateMeshSection(TempMeshIndex, BackFace.Vertices, BackFace.Triangles, BackFace.Normal, UV, BackFace.Color, Tangents, false);
+	//TODO -- Create Mesh Section for each face, figure out what UVs, and tangents do;
 
 
 }
